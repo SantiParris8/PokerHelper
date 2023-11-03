@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!-- Add Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+  <style>
+    /* Add some space between the buttons */
+    #ranks button, #suits button {
+      margin: 5px;
+    }
+
+    /* Color the suits */
+    #suits button:nth-child(1),
+    #suits button:nth-child(3) {
+      color: black;
+    }
+
+    #suits button:nth-child(2),
+    #suits button:nth-child(4) {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Select Cards</h1>
+
+  <div id="ranks">
+    <button class="btn btn-primary">A</button>
+    <button class="btn btn-primary">K</button>
+    <button class="btn btn-primary">Q</button>
+    <button class="btn btn-primary">J</button>
+    <button class="btn btn-primary">T</button>
+    <button class="btn btn-primary">9</button>
+    <button class="btn btn-primary">8</button>
+    <button class="btn btn-primary">7</button>
+    <button class="btn btn-primary">6</button>
+    <button class="btn btn-primary">5</button>
+    <button class="btn btn-primary">4</button>
+    <button class="btn btn-primary">3</button>
+    <button class="btn btn-primary">2</button>
+  </div>
+
+  <div id="suits">
+    <button class="btn btn-light">♠️</button>
+    <button class="btn btn-light">♥️</button>
+    <button class="btn btn-light">♦️</button>
+    <button class="btn btn-light">♣️</button>
+  </div>
+
+
+<textarea id="hand" readonly></textarea>
+
+<script>
+  let selectedRank = '';
+  let selectedSuit = '';
+  let hand = [];
+
+  document.getElementById('ranks').addEventListener('click', function(event) {
+    if (event.target.tagName === 'BUTTON') {
+      selectedRank = event.target.textContent;
+      updateHand();
+    }
+  });
+
+  document.getElementById('suits').addEventListener('click', function(event) {
+    if (event.target.tagName === 'BUTTON') {
+      selectedSuit = event.target.textContent;
+      updateHand();
+    }
+  });
+
+  function updateHand() {
+    if (selectedRank && selectedSuit) {
+      if (hand.length === 5) {
+        hand = [];
+        document.getElementById('hand').value = '';
+      }
+      hand.push(selectedRank + selectedSuit);
+      document.getElementById('hand').value += selectedRank + selectedSuit + ' ';
+      selectedRank = '';
+      selectedSuit = '';
+      if (hand.length === 5) {
+        alert(recommendedPlay(hand));
+      }
+    }
+  }
+
+  function isRoyalFlush(hand) {
+    // Sort the hand by rank in descending order
+    hand.sort((a, b) => 'AKQJT98765432'.indexOf(a[0]) - 'AKQJT98765432'.indexOf(b[0]));
+
+    // Check if all cards are of the same suit
+    const sameSuit = hand.every((card, i, arr) => card[1] === arr[0][1]);
+
+    // Check if the hand is a 10 to Ace straight
+    const royalStraight = hand.every((card, i) => 'AKQJT'[i] === card[0]);
+
+    return sameSuit && royalStraight;
+  }
+
+ 
+  function isStraightFlush(hand) {
+  // Sort the hand by rank in ascending order
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+
+  // Check if all cards are of the same suit
+  const sameSuit = hand.every((card, i, arr) => card[1] === arr[0][1]);
+
+  // Check if the hand is a straight
+  const straight = hand.every((card, i, arr) => i === 0 || '23456789TJQKA'.indexOf(card[0]) === '23456789TJQKA'.indexOf(arr[i - 1][0]) + 1);
+
+  return sameSuit && straight;
+}
+
+function isFourOfAKind(hand) {
+  // Create an object to count the occurrences of each rank
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+
+  // Check if there's a rank that appears four times
+  return Object.values(rankCounts).includes(4);
+}
+
+
+function isFourToARoyalFlush(hand) {
+  const royalCards = ['A', 'K', 'Q', 'J', 'T'];
+  const suits = ['♠️', '♥️', '♦️', '♣️'];
+
+  for (let suit of suits) {
+    let count = 0;
+    for (let card of hand) {
+      if (card[1] === suit && royalCards.includes(card[0])) {
+        count++;
+      }
+    }
+    if (count === 4) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function isFullHouse(hand) {
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+
+  const counts = Object.values(rankCounts);
+  return counts.includes(3) && counts.includes(2);
+}
+
+
+function isFlush(hand) {
+  const suit = hand[0][1];
+  return hand.every(card => card[1] === suit);
+}
+
+function isThreeOfAKind(hand) {
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+
+  return Object.values(rankCounts).includes(3);
+}
+
+
+function isStraight(hand) {
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+  return hand.every((card, i, arr) => i === 0 || '23456789TJQKA'.indexOf(card[0]) === '23456789TJQKA'.indexOf(arr[i - 1][0]) + 1);
+}
+
+function isFourToAStraightFlush(hand) {
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+  const sameSuit = hand.every((card, i, arr) => card[1] === arr[0][1]);
+  let straightCount = 0;
+  for (let i = 1; i < hand.length; i++) {
+    if ('23456789TJQKA'.indexOf(hand[i][0]) === '23456789TJQKA'.indexOf(hand[i - 1][0]) + 1) {
+      straightCount++;
+    } else {
+      straightCount = 0;
+    }
+    if (straightCount === 3) {
+      break;
+    }
+  }
+  return sameSuit && straightCount === 3;
+}
+
+
+function isTwoPair(hand) {
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+
+  const counts = Object.values(rankCounts);
+  return counts.filter(count => count === 2).length === 2;
+}
+
+function isHighPair(hand) {
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+
+  const highCards = ['A', 'K', 'Q', 'J', 'T'];
+  return Object.entries(rankCounts).some(([rank, count]) => highCards.includes(rank) && count === 2);
+}
+
+
+function isThreeToARoyalFlush(hand) {
+  const royalCards = ['A', 'K', 'Q', 'J', 'T'];
+  const suits = ['♠️', '♥️', '♦️', '♣️'];
+
+  for (let suit of suits) {
+    let count = 0;
+    for (let card of hand) {
+      if (card[1] === suit && royalCards.includes(card[0])) {
+        count++;
+      }
+    }
+    if (count === 3) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function isFourToAFlush(hand) {
+  const suitCounts = hand.reduce((counts, card) => {
+    counts[card[1]] = (counts[card[1]] || 0) + 1;
+    return counts;
+  }, {});
+
+  return Object.values(suitCounts).includes(4);
+}
+
+function isKQJTOffsuit(hand) {
+  const requiredCards = ['K', 'Q', 'J', 'T'];
+  const handCards = hand.map(card => card[0]);
+  return requiredCards.every(card => handCards.includes(card)) && !isFlush(hand);
+}
+
+function isLowPair(hand) {
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card[0]] = (counts[card[0]] || 0) + 1;
+    return counts;
+  }, {});
+
+  const lowCards = ['2', '3', '4', '5', '6', '7', '8', '9'];
+  return Object.entries(rankCounts).some(([rank, count]) => lowCards.includes(rank) && count === 2);
+}
+
+
+function isFourCardsToAnOpenEndedStraight(hand) {
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+  let straightCount = 0;
+  for (let i = 1; i < hand.length; i++) {
+    if ('23456789TJQKA'.indexOf(hand[i][0]) === '23456789TJQKA'.indexOf(hand[i - 1][0]) + 1) {
+      straightCount++;
+    } else {
+      straightCount = 0;
+    }
+    if (straightCount === 3) {
+      break;
+    }
+  }
+  return straightCount === 3;
+}
+
+function isThreeToAStraightFlush(hand) {
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+  const sameSuit = hand.every((card, i, arr) => card[1] === arr[0][1]);
+  let straightCount = 0;
+  for (let i = 1; i < hand.length; i++) {
+    if ('23456789TJQKA'.indexOf(hand[i][0]) === '23456789TJQKA'.indexOf(hand[i - 1][0]) + 1) {
+      straightCount++;
+    } else {
+      straightCount = 0;
+    }
+    if (straightCount === 2) {
+      break;
+    }
+  }
+  return sameSuit && straightCount === 2;
+}
+
+function isSuitedQJ(hand) {
+  return hand.some(card => card === 'Q♠️' || card === 'Q♥️' || card === 'Q♦️' || card === 'Q♣️') &&
+         hand.some(card => card === 'J♠️' || card === 'J♥️' || card === 'J♦️' || card === 'J♣️');
+}
+
+
+function isFourToAnInsideStraightWith4HighCards(hand) {
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+  const highCards = ['A', 'K', 'Q', 'J', 'T'];
+  let straightCount = 0;
+  let highCardCount = 0;
+  for (let i = 1; i < hand.length; i++) {
+    if ('23456789TJQKA'.indexOf(hand[i][0]) === '23456789TJQKA'.indexOf(hand[i - 1][0]) + 1) {
+      straightCount++;
+    } else {
+      straightCount = 0;
+    }
+    if (highCards.includes(hand[i][0])) {
+      highCardCount++;
+    }
+    if (straightCount === 3 && highCardCount === 4) {
+      break;
+    }
+  }
+  return straightCount === 3 && highCardCount === 4;
+}
+
+function isSuitedKQorKJ(hand) {
+  return (hand.some(card => card === 'K♠️' || card === 'K♥️' || card === 'K♦️' || card === 'K♣️') &&
+          hand.some(card => card === 'Q♠️' || card === 'Q♥️' || card === 'Q♦️' || card === 'Q♣️')) ||
+         (hand.some(card => card === 'K♠️' || card === 'K♥️' || card === 'K♦️' || card === 'K♣️') &&
+          hand.some(card => card === 'J♠️' || card === 'J♥️' || card === 'J♦️' || card === 'J♣️'));
+}
+
+function isSuitedAKAQorAJ(hand) {
+  const suits = ['♠️', '♥️', '♦️', '♣️'];
+
+  for (let suit of suits) {
+    const suitedCards = hand.filter(card => card[1] === suit);
+    if (suitedCards.length < 2) {
+      continue;
+    }
+
+    const ranks = suitedCards.map(card => card[0]);
+    if ((ranks.includes('A') && ranks.includes('K')) ||
+        (ranks.includes('A') && ranks.includes('Q')) ||
+        (ranks.includes('A') && ranks.includes('J'))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+
+function isFourToAnInsideStraightWith3HighCards(hand) {
+  hand.sort((a, b) => '23456789TJQKA'.indexOf(a[0]) - '23456789TJQKA'.indexOf(b[0]));
+  const highCards = ['A', 'K', 'Q', 'J', 'T'];
+  let straightCount = 0;
+  let highCardCount = 0;
+  for (let i = 1; i < hand.length; i++) {
+    if ('23456789TJQKA'.indexOf(hand[i][0]) === '23456789TJQKA'.indexOf(hand[i - 1][0]) + 1) {
+      straightCount++;
+    } else {
+      straightCount = 0;
+    }
+    if (highCards.includes(hand[i][0])) {
+      highCardCount++;
+    }
+    if (straightCount === 3 && highCardCount === 3) {
+      break;
+    }
+  }
+  return straightCount === 3 && highCardCount === 3;
+}
+
+function isKQJOffsuit(hand) {
+  const requiredCards = ['K', 'Q', 'J'];
+  const handCards = hand.map(card => card[0]);
+  return requiredCards.every(card => handCards.includes(card)) && !isFlush(hand);
+}
+
+function isQJOffsuit(hand) {
+  const requiredCards = ['Q', 'J'];
+  const handCards = hand.map(card => card[0]);
+  return requiredCards.every(card => handCards.includes(card)) && !isFlush(hand);
+}
+
+function isSuitedQJ(hand) {
+  const suitedQJ = hand.filter(card => (card === 'Q♠️' || card === 'Q♥️' || card === 'Q♦️' || card === 'Q♣️') &&
+                                     (hand.includes(card[0] + 'J♠️') || hand.includes(card[0] + 'J♥️') ||
+                                      hand.includes(card[0] + 'J♦️') || hand.includes(card[0] + 'J♣️')));
+  return suitedQJ.length > 0;
+}
+
+
+function isJTOffsuit(hand) {
+  const requiredCards = ['J', 'T'];
+  const handCards = hand.map(card => card[0]);
+  const suits = hand.map(card => card[1]);
+  const uniqueSuits = [...new Set(suits)];
+  return requiredCards.every(card => handCards.includes(card)) && uniqueSuits.length > 1;
+}
+
+function isSuitedJT(hand) {
+  return (hand.some(card => card === 'J♠️' || card === 'J♥️' || card === 'J♦️' || card === 'J♣️') &&
+          hand.some(card => card === 'T♠️' || card === 'T♥️' || card === 'T♦️' || card === 'T♣️'));
+}
+
+function isSuitedQT(hand) {
+  return (hand.some(card => card === 'Q♠️' || card === 'Q♥️' || card === 'Q♦️' || card === 'Q♣️') &&
+          hand.some(card => card === 'T♠️' || card === 'T♥️' || card === 'T♦️' || card === 'T♣️'));
+}
+
+
+function isTwoOffsuitHighCardsKingHighest(hand) {
+  const highCards = ['A', 'K', 'Q', 'J', 'T'];
+  const suits = hand.map(card => card[1]);
+  const uniqueSuits = [...new Set(suits)];
+  const highCardCount = hand.filter(card => highCards.includes(card[0])).length;
+  const kingCount = hand.filter(card => card[0] === 'K').length;
+  return highCardCount === 2 && kingCount === 1 && uniqueSuits.length > 1;
+}
+
+function isJ(hand) {
+  return hand.some(card => card[0] === 'J');
+}
+
+function isSuitedKT(hand) {
+  const suits = ['♠️', '♥️', '♦️', '♣️'];
+
+  for (let suit of suits) {
+    const suitedCards = hand.filter(card => card[1] === suit);
+    if (suitedCards.length < 2) {
+      continue;
+    }
+
+    const ranks = suitedCards.map(card => card[0]);
+    if (ranks.includes('K') && ranks.includes('T')) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+function isQ(hand) {
+  return hand.some(card => card[0] === 'Q');
+}
+
+function isK(hand) {
+  return hand.some(card => card[0] === 'K');
+}
+
+function isA(hand) {
+  return hand.some(card => card[0] === 'A');
+}
+
+
+const handCheckFunctions = [
+  isRoyalFlush,
+  isStraightFlush,
+  isFourOfAKind,
+  isFourToARoyalFlush,
+  isFullHouse,
+  isFlush,
+  isThreeOfAKind,
+  isStraight,
+  isFourToAStraightFlush,
+  isTwoPair,
+  isHighPair,
+  isThreeToARoyalFlush,
+  isFourToAFlush,
+  isKQJTOffsuit,
+  isLowPair,
+  isFourCardsToAnOpenEndedStraight,
+  isThreeToAStraightFlush,
+  isSuitedQJ,
+  isFourToAnInsideStraightWith4HighCards,
+  isSuitedKQorKJ,
+  isSuitedAKAQorAJ,
+  isFourToAnInsideStraightWith3HighCards,
+  isKQJOffsuit,
+  isQJOffsuit,
+  isJTOffsuit,
+  isSuitedJT,
+  isSuitedQT,
+  isTwoOffsuitHighCardsKingHighest,
+  isJ,
+  isSuitedKT,
+  isQ,
+  isK,
+  isA
+];
+
+const handPriorities = [
+  'Keep a Royal Flush',
+  'Keep a Straight Flush',
+  'Keep Four of a Kind',
+  'Keep Four to a Royal Flush',
+  'Keep a Full House',
+  'Keep a Flush',
+  'Keep Three of a Kind',
+  'Keep a Straight',
+  'Keep Four to a Straight Flush',
+  'Keep Two Pair',
+  'Keep a High Pair',
+  'Keep Three to a Royal Flush',
+  'Keep Four to a Flush',
+  'Keep KQJT offsuit',
+  'Keep a Low Pair',
+  'Keep Four Cards to an Open-Ended Straight',
+  'Keep Three to a Straight Flush',
+  'Keep Suited QJ',
+  'Keep Four to an Inside Straight with 4 High Cards',
+  'Keep Suited KQ or KJ',
+  'Keep Suited AK, AQ, or AJ',
+  'Keep Four to an Inside Straight with 3 High Cards',
+  'Keep KQJ offsuit',
+  'Keep QJ offsuit',
+  'Keep JT offsuit',
+  'Keep Suited JT',
+  'Keep Suited QT',
+  'Keep two offsuit High Cards (King Highest)',
+  'Keep a J',
+  'Keep Suited KT',
+  'Keep a Q',
+  'Keep a K',
+  'Keep an A',
+  'Discard All Cards'
+];
+
+function recommendedPlay(hand) {
+  for (let i = 0; i < handCheckFunctions.length; i++) {
+    if (handCheckFunctions[i](hand)) {
+      return handPriorities[i];
+    }
+  }
+
+  return 'Discard All Cards';
+}
+
+
+
+</script>
+
+</body>
+</html>
